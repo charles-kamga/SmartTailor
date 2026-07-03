@@ -1,12 +1,3 @@
-C'est une excellente idée. Remplacer le fichier `README.md` par défaut par un document personnalisé et structuré donnera une allure professionnelle immédiate à votre projet, que ce soit pour votre encadreur ou pour d'autres développeurs au sein de l'incubateur **Te-Sea Incubator**.
-
-Voici une proposition de `README.md` complète, propre et rédigée en français, prête à remplacer le template par défaut de React Native.
-
----
-
-### Proposition de fichier `README.md` pour `SmartTailor`
-
-```markdown
 # SmartTailor 🧵📱
 
 > **Projet de fin d'études — Incubateur Te-Sea**  
@@ -102,10 +93,4 @@ L'application communique directement avec les services Google de l'utilisateur c
 3.  Il effectue des requêtes REST vers Google Drive pour rechercher ou créer un fichier nommé `SmartTailor_Commandes`.
 4.  Les commandes non synchronisées (`is_synced = 0` dans SQLite) sont envoyées à la suite du tableau Google Sheets via l'API Sheets Append.
 5.  Une fois la confirmation obtenue, les lignes locales sont marquées comme synchronisées (`is_synced = 1`) en local.
-```
 
----
-
-### Étape suivante
-
-Dès que vous avez remplacé le fichier `README.md` par défaut, nous pourrons passer au codage de l'écran **"Catalogue" (`CatalogueScreen.tsx`)** !
