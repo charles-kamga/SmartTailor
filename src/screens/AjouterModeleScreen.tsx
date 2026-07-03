@@ -8,17 +8,51 @@ import {
   Image,
   ScrollView,
   Alert,
-  Platform,
   ActivityIndicator,
 } from 'react-native';
 import Icon from 'react-native-vector-icons/Ionicons';
 import { useNavigation } from '@react-navigation/native';
 import { launchImageLibrary, launchCamera } from 'react-native-image-picker';
+import RNFS from 'react-native-fs';
 import { GARMENT_TEMPLATES } from '../database/garmentTemplates';
 import { insererModeleCatalogue } from '../database/queries';
 
-// Chemin de stockage privé Android pour les images du catalogue
-const CATALOGUE_IMAGES_DIR = '/storage/emulated/0/Android/data/com.smarttailor/files/Pictures/Catalogue';
+/**
+ * Copie physiquement un fichier temporaire (photo) vers le dossier permanent
+ * privé de l'application, puis retourne le chemin permanent.
+ *
+ * Android supprime les fichiers temporaires du cache régulièrement.
+ * Sans cette copie, les photos disparaîtraient après quelques jours.
+ */
+const copierPhotoVersStockagePermanent = async (uri: string): Promise<string> => {
+  const dossierCatalogue = `${RNFS.ExternalDirectoryPath}/Catalogue`;
+
+  // 1. Créer le dossier s'il n'existe pas
+  const dossierExiste = await RNFS.exists(dossierCatalogue);
+  if (!dossierExiste) {
+    await RNFS.mkdir(dossierCatalogue);
+  }
+
+  // 2. Déterminer l'extension et le nom de fichier unique
+  const extension = uri.toLowerCase().endsWith('.png') ? '.png' : '.jpg';
+  const timestamp = Date.now();
+  const nomFichier = `modele_${timestamp}${extension}`;
+  const cheminFinal = `${dossierCatalogue}/${nomFichier}`;
+
+  // 3. Copier le fichier selon le type d'URI
+  if (uri.startsWith('content://')) {
+    // URI de la Galerie (Android 10+) — lecture via ContentResolver brute
+    const contenuBase64 = await RNFS.readFile(uri, 'base64');
+    await RNFS.writeFile(cheminFinal, contenuBase64, 'base64');
+  } else {
+    // URI de l'appareil photo (file://) — copie directe
+    const cheminSource = uri.replace('file://', '');
+    await RNFS.copyFile(cheminSource, cheminFinal);
+  }
+
+  console.log('=== PHOTO COPIÉE VERS PERMANENT ===', cheminFinal);
+  return cheminFinal;
+};
 
 export default function AjouterModeleScreen() {
   const navigation = useNavigation();
@@ -37,7 +71,7 @@ export default function AjouterModeleScreen() {
       (response) => {
         if (response.didCancel) return;
         if (response.errorCode) {
-          Alert.alert('Erreur', `Impossible d'ouvrir l'appareil photo: ${response.errorMessage}`);
+          Alert.alert('Erreur', `Impossible d'ouvrir l'appareil photo : ${response.errorMessage}`);
           return;
         }
         if (response.assets?.[0]?.uri) {
@@ -56,7 +90,7 @@ export default function AjouterModeleScreen() {
       (response) => {
         if (response.didCancel) return;
         if (response.errorCode) {
-          Alert.alert('Erreur', `Impossible d'ouvrir la galerie: ${response.errorMessage}`);
+          Alert.alert('Erreur', `Impossible d'ouvrir la galerie : ${response.errorMessage}`);
           return;
         }
         if (response.assets?.[0]?.uri) {
@@ -68,8 +102,8 @@ export default function AjouterModeleScreen() {
 
   const choisirImage = () => {
     Alert.alert('Ajouter une photo', 'Choisissez une source', [
-      { text: 'Appareil photo', onPress: ouvrirCamera },
-      { text: 'Galerie', onPress: ouvrirGalerie },
+      { text: '📷 Appareil photo', onPress: ouvrirCamera },
+      { text: '🖼️ Galerie', onPress: ouvrirGalerie },
       { text: 'Annuler', style: 'cancel' },
     ]);
   };
@@ -86,21 +120,21 @@ export default function AjouterModeleScreen() {
 
     setSauvegardeEnCours(true);
     try {
-      // Pour Android, on garde l'URI source (le fichier temporaire sera géré
-      // par le système ou on copie vers le dossier privé de l'application)
-      const cheminFinal = imageUri.startsWith('file://') ? imageUri.replace('file://', '') : imageUri;
+      // Étape critique : copier la photo du cache temporaire vers le dossier permanent
+      const cheminPermanent = await copierPhotoVersStockagePermanent(imageUri);
 
-      const insertId = await insererModeleCatalogue(categorie, titre.trim(), cheminFinal);
+      // Étape finale : sauvegarder le chemin permanent dans SQLite
+      const insertId = await insererModeleCatalogue(categorie, titre.trim(), cheminPermanent);
 
       if (insertId !== null) {
-        Alert.alert('Succès', 'Modèle ajouté au catalogue !', [
+        Alert.alert('✅ Succès', `"${titre.trim()}" ajouté au catalogue !`, [
           { text: 'OK', onPress: () => navigation.goBack() },
         ]);
       } else {
-        Alert.alert('Erreur', "Impossible d'enregistrer le modèle.");
+        Alert.alert('Erreur', "Impossible d'enregistrer le modèle en base de données.");
       }
     } catch (error) {
-      console.error('Erreur sauvegarde modèle:', error);
+      console.error('Erreur lors de la sauvegarde du modèle :', error);
       Alert.alert('Erreur', 'Une erreur est survenue lors de la sauvegarde.');
     } finally {
       setSauvegardeEnCours(false);
@@ -129,7 +163,7 @@ export default function AjouterModeleScreen() {
       />
 
       {/* Catégorie */}
-      <Text style={styles.label}>Catégorie</Text>
+      <Text style={styles.label}>Catégorie de vêtement</Text>
       <ScrollView
         horizontal
         showsHorizontalScrollIndicator={false}
@@ -150,16 +184,16 @@ export default function AjouterModeleScreen() {
         ))}
       </ScrollView>
 
-      {/* Zone photo */}
-      <Text style={styles.label}>Photo du modèle</Text>
+      {/* Zone photo cliquable */}
+      <Text style={styles.label}>Photo du modèle fini</Text>
       <TouchableOpacity style={styles.zonePhoto} onPress={choisirImage}>
         {imageUri ? (
           <Image source={{ uri: imageUri }} style={styles.photoApercu} resizeMode="cover" />
         ) : (
           <View style={styles.zonePhotoPlaceholder}>
-            <Icon name="camera-outline" size={48} color="#94A3B8" />
+            <Icon name="camera-outline" size={52} color="#94A3B8" />
             <Text style={styles.zonePhotoTexte}>
-              Appuyez pour prendre{'\n'}une photo ou choisir{'\n'}depuis la galerie
+              Appuyez pour prendre une photo{'\n'}ou choisir depuis la galerie
             </Text>
           </View>
         )}
@@ -172,7 +206,10 @@ export default function AjouterModeleScreen() {
         disabled={!titre.trim() || !imageUri || sauvegardeEnCours}
       >
         {sauvegardeEnCours ? (
-          <ActivityIndicator color="#FFF" size="small" />
+          <View style={styles.chargeur}>
+            <ActivityIndicator color="#FFF" size="small" />
+            <Text style={styles.boutonValiderTexte}>  Sauvegarde en cours…</Text>
+          </View>
         ) : (
           <Text style={styles.boutonValiderTexte}>Enregistrer le modèle</Text>
         )}
@@ -214,6 +251,7 @@ const styles = StyleSheet.create({
     fontWeight: '600',
     color: '#475569',
     marginBottom: 8,
+    marginTop: 4,
   },
   input: {
     backgroundColor: '#FFFFFF',
@@ -288,5 +326,9 @@ const styles = StyleSheet.create({
     color: '#FFFFFF',
     fontSize: 16,
     fontWeight: '600',
+  },
+  chargeur: {
+    flexDirection: 'row',
+    alignItems: 'center',
   },
 });

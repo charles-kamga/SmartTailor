@@ -12,6 +12,7 @@ import {
 } from 'react-native';
 import Icon from 'react-native-vector-icons/Ionicons';
 import { useNavigation } from '@react-navigation/native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import type { RootStackParamList } from '../navigation/types';
 import { recupererTousModelesCatalogue } from '../database/queries';
@@ -38,6 +39,7 @@ interface CatalogueItem {
 
 export default function CatalogueScreen() {
   const navigation = useNavigation<NavigationProp>();
+  const insets = useSafeAreaInsets();
   const [modeles, setModeles] = useState<CatalogueItem[]>([]);
   const [filtreActif, setFiltreActif] = useState('all');
   const [chargement, setChargement] = useState(true);
@@ -122,7 +124,7 @@ export default function CatalogueScreen() {
   return (
     <View style={styles.container}>
       {/* En-tête */}
-      <View style={styles.header}>
+      <View style={[styles.header, { paddingTop: insets.top + 12 }]}>
         <Text style={styles.headerTitre}>Catalogue</Text>
         <TouchableOpacity
           style={styles.boutonSquircle}
@@ -136,6 +138,7 @@ export default function CatalogueScreen() {
       <FlatList
         data={CATEGORIES}
         horizontal
+        style={styles.filtresList}
         showsHorizontalScrollIndicator={false}
         contentContainerStyle={styles.filtresConteneur}
         keyExtractor={(item) => item.id}
@@ -170,7 +173,7 @@ export default function CatalogueScreen() {
           numColumns={2}
           contentContainerStyle={styles.grille}
           columnWrapperStyle={styles.grilleRangee}
-          showsVerticalScrollIndicator={false}
+          showsVerticalScrollIndicator={true}
           refreshControl={
             <RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor="#E2583E" />
           }
@@ -195,9 +198,8 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    paddingHorizontal: 20,
-    paddingTop: 16,
-    paddingBottom: 8,
+    paddingBottom: 12,
+    paddingHorizontal: 16,
   },
   headerTitre: {
     fontSize: 28,
@@ -205,9 +207,9 @@ const styles = StyleSheet.create({
     color: '#0F172A',
   },
   boutonSquircle: {
-    width: 48,
-    height: 48,
-    borderRadius: 16,
+    width: 44,
+    height: 44,
+    borderRadius: 12,
     backgroundColor: '#E2583E',
     justifyContent: 'center',
     alignItems: 'center',
@@ -242,7 +244,7 @@ const styles = StyleSheet.create({
   },
   grille: {
     paddingHorizontal: 16,
-    paddingBottom: 24,
+    paddingBottom: 8,
   },
   grilleRangee: {
     justifyContent: 'space-between',
@@ -312,5 +314,8 @@ const styles = StyleSheet.create({
     color: '#FFF',
     fontSize: 16,
     fontWeight: '600',
+  },
+  filtresList: {
+    flexGrow: 0,
   },
 });
