@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import {
   View,
   Text,
@@ -15,15 +15,42 @@ import {
 import { SafeAreaView } from 'react-native-safe-area-context';
 import Icon from 'react-native-vector-icons/Ionicons';
 import { GARMENT_TEMPLATES } from '../database/garmentTemplates';
+import { recupererModelesCatalogueParType } from '../database/queries';
 
 const MODELES = GARMENT_TEMPLATES;
+
+interface CatalogueItem {
+  id: number;
+  garment_type_id: string;
+  title: string;
+  image_path: string;
+}
 
 export default function NouveauClientScreen({ navigation }: any) {
   const [nomComplet, setNomComplet] = useState('');
   const [telephone, setTelephone] = useState('');
   const [selectedModelId, setSelectedModelId] = useState(GARMENT_TEMPLATES[0].id);
+  const [catalogueModeles, setCatalogueModeles] = useState<CatalogueItem[]>([]);
+  const [catalogueSelectionneId, setCatalogueSelectionneId] = useState<number | null>(null);
 
   const activeTemplate = GARMENT_TEMPLATES.find(t => t.id === selectedModelId);
+
+  // Charger les modèles du catalogue pour le type sélectionné
+  const chargerModelesCatalogue = useCallback(async (typeId: string) => {
+    try {
+      const modeles = await recupererModelesCatalogueParType(typeId);
+      setCatalogueModeles(modeles);
+      // Réinitialiser la sélection si le type change
+      setCatalogueSelectionneId(null);
+    } catch (error) {
+      console.error('Erreur chargement catalogue:', error);
+      setCatalogueModeles([]);
+    }
+  }, []);
+
+  useEffect(() => {
+    chargerModelesCatalogue(selectedModelId);
+  }, [selectedModelId, chargerModelesCatalogue]);
 
   const handleProceedToMeasurements = () => {
     // Validation simple avant de continuer
@@ -40,7 +67,8 @@ export default function NouveauClientScreen({ navigation }: any) {
     navigation.navigate('PriseMesures', {
       clientName: nomComplet,
       clientPhone: telephone,
-      selectedModelId: selectedModelId,
+      selectedModel: selectedModelId,
+      catalogueModeleId: catalogueSelectionneId,
     });
   };
 
@@ -110,11 +138,68 @@ export default function NouveauClientScreen({ navigation }: any) {
               })}
             </ScrollView>
 
+            {/* Carrousel des modèles du catalogue pour le type sélectionné */}
+            {catalogueModeles.length > 0 && (
+              <View style={styles.catalogueSection}>
+                <Text style={styles.catalogueSectionLabel}>MES MODÈLES</Text>
+                <ScrollView
+                  horizontal
+                  showsHorizontalScrollIndicator={false}
+                  contentContainerStyle={styles.catalogueCarrousel}
+                >
+                  {catalogueModeles.map((modele) => {
+                    const estSelectionne = catalogueSelectionneId === modele.id;
+                    return (
+                      <TouchableOpacity
+                        key={modele.id}
+                        style={[
+                          styles.carteCatalogue,
+                          estSelectionne && styles.carteCatalogueActif,
+                        ]}
+                        onPress={() =>
+                          setCatalogueSelectionneId(
+                            estSelectionne ? null : modele.id
+                          )
+                        }
+                      >
+                        <Image
+                          source={{ uri: modele.image_path }}
+                          style={styles.carteCatalogueImage}
+                          resizeMode="cover"
+                        />
+                        <Text
+                          style={[
+                            styles.carteCatalogueTitre,
+                            estSelectionne && styles.carteCatalogueTitreActif,
+                          ]}
+                          numberOfLines={1}
+                        >
+                          {modele.title}
+                        </Text>
+                        {estSelectionne && (
+                          <View style={styles.carteCheckBadge}>
+                            <Icon name="checkmark-circle" size={24} color="#E2583E" />
+                          </View>
+                        )}
+                      </TouchableOpacity>
+                    );
+                  })}
+                </ScrollView>
+              </View>
+            )}
+
             {activeTemplate && (
               <View style={styles.previewCard}>
                 <Text style={styles.previewTitle}>Aperçu du style : {activeTemplate.name}</Text>
                 <Image 
-                  source={{ uri: activeTemplate.illustrationUrl }} 
+                  source={{
+                    uri:
+                      catalogueSelectionneId !== null
+                        ? (catalogueModeles.find(
+                            (m) => m.id === catalogueSelectionneId
+                          )?.image_path ?? activeTemplate.illustrationUrl)
+                        : activeTemplate.illustrationUrl,
+                  }}
                   style={styles.previewImage} 
                   resizeMode="cover"
                 />
@@ -303,5 +388,59 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: 'bold',
     color: '#FFFFFF',
+  },
+  catalogueSection: {
+    marginTop: 16,
+  },
+  catalogueSectionLabel: {
+    fontSize: 12,
+    fontWeight: '700',
+    color: '#64748B',
+    letterSpacing: 1,
+    marginBottom: 10,
+  },
+  catalogueCarrousel: {
+    gap: 10,
+    paddingRight: 16,
+  },
+  carteCatalogue: {
+    width: 110,
+    borderRadius: 12,
+    backgroundColor: '#FFFFFF',
+    overflow: 'hidden',
+    borderWidth: 2,
+    borderColor: 'transparent',
+    elevation: 2,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.08,
+    shadowRadius: 3,
+  },
+  carteCatalogueActif: {
+    borderColor: '#E2583E',
+  },
+  carteCatalogueImage: {
+    width: '100%',
+    height: 90,
+    backgroundColor: '#F1F5F9',
+  },
+  carteCatalogueTitre: {
+    fontSize: 11,
+    fontWeight: '500',
+    color: '#475569',
+    paddingHorizontal: 8,
+    paddingVertical: 6,
+    textAlign: 'center',
+  },
+  carteCatalogueTitreActif: {
+    color: '#E2583E',
+    fontWeight: '600',
+  },
+  carteCheckBadge: {
+    position: 'absolute',
+    top: 4,
+    right: 4,
+    backgroundColor: '#FFFFFF',
+    borderRadius: 12,
   },
 });

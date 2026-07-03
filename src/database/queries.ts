@@ -178,7 +178,58 @@ export const recupererTousLesClients = async (): Promise<ClientDB[]> => {
 };
 
 /**
- * 5. Récupérer les commandes non synchronisées pour le service de Sync
+ * 5. Récupérer tous les modèles du catalogue
+ */
+export const recupererTousModelesCatalogue = async (): Promise<any[]> => {
+  try {
+    const result = await db.execute(`
+      SELECT * FROM catalogue_modeles ORDER BY created_at DESC;
+    `);
+    return getRows(result);
+  } catch (error) {
+    console.error('Erreur lors de la récupération du catalogue :', error);
+    return [];
+  }
+};
+
+/**
+ * 6. Récupérer les modèles du catalogue filtrés par type de vêtement
+ */
+export const recupererModelesCatalogueParType = async (garmentTypeId: string): Promise<any[]> => {
+  try {
+    const result = await db.execute(
+      `SELECT * FROM catalogue_modeles WHERE garment_type_id = ? ORDER BY created_at DESC;`,
+      [garmentTypeId]
+    );
+    return getRows(result);
+  } catch (error) {
+    console.error('Erreur lors du filtrage du catalogue :', error);
+    return [];
+  }
+};
+
+/**
+ * 7. Insérer un nouveau modèle dans le catalogue
+ */
+export const insererModeleCatalogue = async (
+  garmentTypeId: string,
+  title: string,
+  imagePath: string
+): Promise<number | null> => {
+  try {
+    const result = await db.execute(
+      `INSERT INTO catalogue_modeles (garment_type_id, title, image_path) VALUES (?, ?, ?);`,
+      [garmentTypeId, title, imagePath]
+    );
+    return result.insertId ?? null;
+  } catch (error) {
+    console.error("Erreur lors de l'insertion du modèle au catalogue :", error);
+    return null;
+  }
+};
+
+/**
+ * 8. Récupérer les commandes non synchronisées pour le service de Sync
  */
 export const recupererCommandesNonSynchro = async (): Promise<any[]> => {
   try {

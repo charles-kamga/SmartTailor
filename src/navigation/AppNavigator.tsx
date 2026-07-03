@@ -13,15 +13,8 @@ import ClientsScreen from '../screens/ClientsScreen';
 import CommandesScreen from '../screens/CommandesScreen';
 import NouveauClientScreen from '../screens/NouveauClientScreen';
 import PriseMesuresScreen from '../screens/PriseMesuresScreen';
-
-import { View, Text } from 'react-native';
-function CataloguePlaceholder() {
-  return (
-    <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
-      <Text>Catalogue des Modèles</Text>
-    </View>
-  );
-}
+import CatalogueScreen from '../screens/CatalogueScreen';
+import AjouterModeleScreen from '../screens/AjouterModeleScreen';
 
 const Stack = createNativeStackNavigator<RootStackParamList>();
 const Tab = createBottomTabNavigator<BottomTabParamList>();
@@ -55,7 +48,7 @@ function BottomTabNavigator() {
     >
       <Tab.Screen name="Atelier" component={DashboardScreen} />
       <Tab.Screen name="Clients" component={ClientsScreen} />
-      <Tab.Screen name="Catalogue" component={CataloguePlaceholder} />
+      <Tab.Screen name="Catalogue" component={CatalogueScreen} />
       <Tab.Screen name="Commandes" component={CommandesScreen} />
     </Tab.Navigator>
   );
@@ -68,6 +61,7 @@ export default function AppNavigator() {
       <Stack.Screen name="MainApp" component={BottomTabNavigator} />
       <Stack.Screen name="NouveauClient" component={NouveauClientScreen} />
       <Stack.Screen name="PriseMesures" component={PriseMesuresScreen} />
+      <Stack.Screen name="AjouterModele" component={AjouterModeleScreen} />
     </Stack.Navigator>
   );
 }
