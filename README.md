@@ -1,97 +1,111 @@
-This is a new [**React Native**](https://reactnative.dev) project, bootstrapped using [`@react-native-community/cli`](https://github.com/react-native-community/cli).
+C'est une excellente idée. Remplacer le fichier `README.md` par défaut par un document personnalisé et structuré donnera une allure professionnelle immédiate à votre projet, que ce soit pour votre encadreur ou pour d'autres développeurs au sein de l'incubateur **Te-Sea Incubator**.
 
-# Getting Started
+Voici une proposition de `README.md` complète, propre et rédigée en français, prête à remplacer le template par défaut de React Native.
 
-> **Note**: Make sure you have completed the [Set Up Your Environment](https://reactnative.dev/docs/set-up-your-environment) guide before proceeding.
+---
 
-## Step 1: Start Metro
+### Proposition de fichier `README.md` pour `SmartTailor`
 
-First, you will need to run **Metro**, the JavaScript build tool for React Native.
+```markdown
+# SmartTailor 🧵📱
 
-To start the Metro dev server, run the following command from the root of your React Native project:
+> **Projet de fin d'études — Incubateur Te-Sea**  
+> *Gérer votre atelier de couture avec élégance et précision.*
 
-```sh
-# Using npm
-npm start
+**SmartTailor** est une application Android développée en **React Native CLI (TypeScript)** conçue pour aider les tailleurs et couturiers (traditionnels et occidentaux) à professionnaliser et simplifier la gestion de leurs commandes, en remplaçant définitivement le cahier de notes papier traditionnel.
 
-# OR using Yarn
-yarn start
+L'application repose sur une philosophie **Offline-First** (stockage local complet) et une architecture **Serverless** (les données sont synchronisées sur le Google Drive et Google Sheets personnels de l'utilisateur connecté).
+
+---
+
+## 🚀 Fonctionnalités Clés
+
+*   **Saisie ultra-rapide des mesures (Zéro Friction) :** Un pavé numérique customisé (de 10 à 190 cm avec un pas de 5) sous forme de panneau coulissant (Bottom Sheet) pour éviter l'ouverture du clavier système et éliminer l'obstruction visuelle.
+*   **Référentiel de vêtements dynamique (10 modèles) :** Gestion de fiches de mesures spécifiques selon le type de vêtement choisi (Sénateur/Ministre, Kaba Ngondo, Grand Boubou, Agbada, Caftan, Costume classique, etc.).
+*   **Aperçu du style & Croquis :** Affichage d'un croquis de mode et d'une description du style lors de la sélection du vêtement pour aider le tailleur et son client.
+*   **Tableau de bord intelligent (Atelier) :** Affichage des livraisons urgentes de la semaine avec des avatars d'initiales clients et des indicateurs visuels de priorité.
+*   **Algorithme d'anticipation des livraisons :** Calcule automatiquement la date d'échéance ("À RENDRE LE") en fonction du temps de confection du vêtement choisi, de la charge de travail de l'atelier sur les 7 derniers jours, et en sautant systématiquement les dimanches.
+*   **Mode Offline / Online & Synchro Google :** L'application fonctionne de manière autonome sans connexion. Dès qu'une connexion internet (Wi-Fi ou données) est détectée, un service de tâche de fond synchronise silencieusement les nouvelles commandes vers un classeur Google Sheets créé automatiquement sur le Drive de l'utilisateur.
+
+---
+
+## 🛠️ Pile Technique (Tech Stack)
+
+*   **Framework :** React Native CLI (TypeScript)
+*   **Navigation :** `@react-navigation/native` (Bottom Tabs + Native Stack)
+*   **Base de données locale :** `@op-engineering/op-sqlite` (Moteur SQLite hautes performances basé sur JSI)
+*   **Authentification Google :** `@react-native-google-signin/google-signin` (Authentification directe avec scopes Drive & Sheets)
+*   **Détection réseau :** `@react-native-community/netinfo`
+*   **Icônes :** `react-native-vector-icons` (Ionicons)
+
+---
+
+## 📂 Architecture des Dossiers
+
+```text
+SmartTailor/
+├── src/
+│   ├── assets/             # Fichiers images, logos, polices de caractères
+│   ├── components/         # Composants réutilisables (Grille de chiffres, cartes, boutons)
+│   ├── database/           # Stockage local SQL
+│   │   ├── database.ts     # Initialisation de la DB op-sqlite
+│   │   ├── queries.ts      # Requêtes SQL de lecture/écriture
+│   │   └── garmentTemplates.ts # Base de données des 10 modèles de vêtements
+│   ├── navigation/         # Configuration des écrans (types, onglets, piles)
+│   ├── screens/            # Écrans de l'application (Login, Atelier, Clients, Nouveau Client...)
+│   └── services/           # Services métiers
+│       ├── deliveryAlgorithm.ts # Algorithme de calcul d'échéance
+│       └── syncService.ts       # Synchronisation vers l'API Google Sheets/Drive
+├── App.tsx                 # Racine de l'application (Écouteur réseau)
+└── package.json            # Dépendances du projet
 ```
 
-## Step 2: Build and run your app
+---
 
-With Metro running, open a new terminal window/pane from the root of your React Native project, and use one of the following commands to build and run your Android or iOS app:
+## 💻 Installation et Lancement (Environnement Linux/Android)
 
-### Android
+### 1. Prérequis
+Assurez-vous d'avoir configuré votre environnement de développement Android sur votre machine.
 
-```sh
-# Using npm
-npm run android
-
-# OR using Yarn
-yarn android
+### 2. Cloner et installer les dépendances
+```bash
+cd SmartTailor
+npm install
 ```
 
-### iOS
-
-For iOS, remember to install CocoaPods dependencies (this only needs to be run on first clone or after updating native deps).
-
-The first time you create a new project, run the Ruby bundler to install CocoaPods itself:
-
-```sh
-bundle install
+### 3. Configurer les polices d'icônes (Android)
+Copiez les fichiers de polices nécessaires dans les ressources Android :
+```bash
+mkdir -p android/app/src/main/assets/fonts
+cp node_modules/react-native-vector-icons/Fonts/*.ttf android/app/src/main/assets/fonts/
 ```
 
-Then, and every time you update your native dependencies, run:
+### 4. Lancer le projet
+1.  **Démarrer le serveur de développement (Metro Bundler) :**
+    ```bash
+    npx react-native start --reset-cache
+    ```
+2.  **Compiler et installer l'application sur l'émulateur ou un téléphone physique connecté (SM-A047F) :**
+    Dans un autre terminal :
+    ```bash
+    npm run android
+    ```
 
-```sh
-bundle exec pod install
+---
+
+## 📁 Fonctionnement de la Synchronisation Google Sheets
+
+L'application communique directement avec les services Google de l'utilisateur connecté sans passer par un serveur intermédiaire tiers (Serverless).
+
+1.  Lors de la connexion (Login), l'application demande l'accès aux permissions `drive.file` et `spreadsheets`.
+2.  Le service récupère le jeton d'accès (`accessToken`).
+3.  Il effectue des requêtes REST vers Google Drive pour rechercher ou créer un fichier nommé `SmartTailor_Commandes`.
+4.  Les commandes non synchronisées (`is_synced = 0` dans SQLite) sont envoyées à la suite du tableau Google Sheets via l'API Sheets Append.
+5.  Une fois la confirmation obtenue, les lignes locales sont marquées comme synchronisées (`is_synced = 1`) en local.
 ```
 
-For more information, please visit [CocoaPods Getting Started guide](https://guides.cocoapods.org/using/getting-started.html).
+---
 
-```sh
-# Using npm
-npm run ios
+### Étape suivante
 
-# OR using Yarn
-yarn ios
-```
-
-If everything is set up correctly, you should see your new app running in the Android Emulator, iOS Simulator, or your connected device.
-
-This is one way to run your app — you can also build it directly from Android Studio or Xcode.
-
-## Step 3: Modify your app
-
-Now that you have successfully run the app, let's make changes!
-
-Open `App.tsx` in your text editor of choice and make some changes. When you save, your app will automatically update and reflect these changes — this is powered by [Fast Refresh](https://reactnative.dev/docs/fast-refresh).
-
-When you want to forcefully reload, for example to reset the state of your app, you can perform a full reload:
-
-- **Android**: Press the <kbd>R</kbd> key twice or select **"Reload"** from the **Dev Menu**, accessed via <kbd>Ctrl</kbd> + <kbd>M</kbd> (Windows/Linux) or <kbd>Cmd ⌘</kbd> + <kbd>M</kbd> (macOS).
-- **iOS**: Press <kbd>R</kbd> in iOS Simulator.
-
-## Congratulations! :tada:
-
-You've successfully run and modified your React Native App. :partying_face:
-
-### Now what?
-
-- If you want to add this new React Native code to an existing application, check out the [Integration guide](https://reactnative.dev/docs/integration-with-existing-apps).
-- If you're curious to learn more about React Native, check out the [docs](https://reactnative.dev/docs/getting-started).
-
-# Troubleshooting
-
-If you're having issues getting the above steps to work, see the [Troubleshooting](https://reactnative.dev/docs/troubleshooting) page.
-
-# Learn More
-
-To learn more about React Native, take a look at the following resources:
-
-- [React Native Website](https://reactnative.dev) - learn more about React Native.
-- [Getting Started](https://reactnative.dev/docs/environment-setup) - an **overview** of React Native and how setup your environment.
-- [Learn the Basics](https://reactnative.dev/docs/getting-started) - a **guided tour** of the React Native **basics**.
-- [Blog](https://reactnative.dev/blog) - read the latest official React Native **Blog** posts.
-- [`@facebook/react-native`](https://github.com/facebook/react-native) - the Open Source; GitHub **repository** for React Native.
+Dès que vous avez remplacé le fichier `README.md` par défaut, nous pourrons passer au codage de l'écran **"Catalogue" (`CatalogueScreen.tsx`)** !
