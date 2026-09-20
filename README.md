@@ -1,12 +1,4 @@
-C'est une excellente idée. Remplacer le fichier `README.md` par défaut par un document personnalisé et structuré donnera une allure professionnelle immédiate à votre projet, que ce soit pour votre encadreur ou pour d'autres développeurs au sein de l'incubateur **Te-Sea Incubator**.
 
-Voici une proposition de `README.md` complète, propre et rédigée en français, prête à remplacer le template par défaut de React Native.
-
----
-
-### Proposition de fichier `README.md` pour `SmartTailor`
-
-```markdown
 # SmartTailor 🧵📱
 
 > **Projet de fin d'études — Incubateur Te-Sea**  
