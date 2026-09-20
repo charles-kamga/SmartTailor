@@ -39,6 +39,7 @@ export const initDatabase = () => {
       CREATE TABLE IF NOT EXISTS commandes (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
         client_id INTEGER NOT NULL,
+        profile TEXT NOT NULL DEFAULT 'homme',
         garment_type_id TEXT NOT NULL,
         catalogue_modele_id INTEGER,
         photo_commande TEXT,
@@ -53,6 +54,14 @@ export const initDatabase = () => {
         FOREIGN KEY (catalogue_modele_id) REFERENCES catalogue_modeles (id) ON DELETE SET NULL
       );
     `);
+
+    // Migration : ajout colonne profile si elle n'existe pas déjà
+    try {
+      db.execute("ALTER TABLE commandes ADD COLUMN profile TEXT NOT NULL DEFAULT 'homme';");
+      console.log('Migration: colonne profile ajoutée à la table commandes.');
+    } catch {
+      // Ignorer si la colonne existe déjà
+    }
 
     console.log('=== BASE DE DONNÉES INITIALISÉE AVEC SUCCÈS ===');
   } catch (error) {

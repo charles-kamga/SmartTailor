@@ -67,9 +67,9 @@ async function creerSpreadsheet(accessToken: string): Promise<string> {
       throw new Error('Échec de la création du fichier Google Sheets.');
     }
 
-    // 2. Initialisation de la ligne d'en-tête (ID, Client, Téléphone...)
+    // 2. Initialisation de la ligne d'en-tête (ID, Client, Téléphone, Profil...)
     const headers = [
-      ['ID Commande', 'Nom Client', 'Téléphone', 'Type Vêtement', 'Mesures (JSON)', 'Notes / Jargon', 'Statut', 'Date Réception', 'Date Livraison Estimée']
+      ['ID Commande', 'Nom Client', 'Téléphone', 'Profil', 'Type Vêtement', 'Mesures (JSON)', 'Notes / Jargon', 'Statut', 'Date Réception', 'Date Livraison Estimée']
     ];
 
     await fetch(
@@ -137,6 +137,7 @@ export async function lancerSynchronisation(): Promise<void> {
       com.id.toString(),
       com.clientName,
       com.clientPhone,
+      com.profile || 'homme',
       com.garment_type_id,
       com.mesures_commande, // Chaîne JSON des mesures
       com.notes || '',

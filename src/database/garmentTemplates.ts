@@ -1,3 +1,5 @@
+export type ProfileType = 'homme' | 'femme' | 'enfant_garcon' | 'enfant_fille';
+
 export interface Measurement {
   key: string;
   label: string;
@@ -6,6 +8,7 @@ export interface Measurement {
 export interface GarmentTemplate {
   id: string;
   name: string;
+  profiles: ProfileType[];
   measurements: Measurement[];
   annotations: string[];
   illustrationUrl: string;
@@ -16,6 +19,7 @@ export const GARMENT_TEMPLATES: GarmentTemplate[] = [
   {
     id: 'senator',
     name: 'Sénateur',
+    profiles: ['homme', 'enfant_garcon'],
     measurements: [
       { key: 'TC', label: 'Tour de Cou (TC)' },
       { key: 'EP', label: 'Épaules / Carrure (EP)' },
@@ -39,6 +43,7 @@ export const GARMENT_TEMPLATES: GarmentTemplate[] = [
   {
     id: 'kaba',
     name: 'Kaba Ngondo',
+    profiles: ['femme', 'enfant_fille'],
     measurements: [
       { key: 'TP', label: 'Tour de Poitrine (TP)' },
       { key: 'EcP', label: 'Écart Poitrine (EcP)' },
@@ -59,6 +64,7 @@ export const GARMENT_TEMPLATES: GarmentTemplate[] = [
   {
     id: 'boubou',
     name: 'Grand Boubou',
+    profiles: ['homme', 'femme', 'enfant_garcon', 'enfant_fille'],
     measurements: [
       { key: 'TC', label: 'Tour de Cou (TC)' },
       { key: 'EP', label: 'Épaules (EP)' },
@@ -77,6 +83,7 @@ export const GARMENT_TEMPLATES: GarmentTemplate[] = [
   {
     id: 'agbada',
     name: 'Agbada / Gandoura',
+    profiles: ['homme', 'enfant_garcon'],
     measurements: [
       { key: 'EP', label: 'Épaules (EP)' },
       { key: 'TP', label: 'Tour de Poitrine (TP)' },
@@ -96,6 +103,7 @@ export const GARMENT_TEMPLATES: GarmentTemplate[] = [
   {
     id: 'caftan',
     name: 'Caftan',
+    profiles: ['femme', 'homme', 'enfant_fille'],
     measurements: [
       { key: 'TP', label: 'Tour de Poitrine (TP)' },
       { key: 'TT', label: 'Tour de Taille (TT)' },
@@ -114,6 +122,7 @@ export const GARMENT_TEMPLATES: GarmentTemplate[] = [
   {
     id: 'suit',
     name: 'Costume classique',
+    profiles: ['homme', 'femme', 'enfant_garcon'],
     measurements: [
       { key: 'TC', label: 'Tour de Cou (TC)' },
       { key: 'EP', label: 'Épaules (EP)' },
@@ -135,6 +144,7 @@ export const GARMENT_TEMPLATES: GarmentTemplate[] = [
   {
     id: 'shirt',
     name: 'Chemise',
+    profiles: ['homme', 'femme', 'enfant_garcon', 'enfant_fille'],
     measurements: [
       { key: 'TC', label: 'Tour de Cou (TC)' },
       { key: 'EP', label: 'Épaules (EP)' },
@@ -151,6 +161,7 @@ export const GARMENT_TEMPLATES: GarmentTemplate[] = [
   {
     id: 'trousers',
     name: 'Pantalon',
+    profiles: ['homme', 'femme', 'enfant_garcon', 'enfant_fille'],
     measurements: [
       { key: 'TT', label: 'Tour de Taille (TT)' },
       { key: 'TB', label: 'Tour de Bassin (TB)' },
@@ -168,6 +179,7 @@ export const GARMENT_TEMPLATES: GarmentTemplate[] = [
   {
     id: 'mermaid_dress',
     name: 'Robe Sirène / Fête',
+    profiles: ['femme', 'enfant_fille'],
     measurements: [
       { key: 'TP', label: 'Tour de Poitrine (TP)' },
       { key: 'EcP', label: 'Écart Poitrine (EcP)' },
@@ -185,6 +197,7 @@ export const GARMENT_TEMPLATES: GarmentTemplate[] = [
   {
     id: 'skirt',
     name: 'Jupe droite / Crayon',
+    profiles: ['femme', 'enfant_fille'],
     measurements: [
       { key: 'TT', label: 'Tour de Taille (TT)' },
       { key: 'TB', label: 'Tour de Bassin (TB)' },

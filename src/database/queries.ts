@@ -20,14 +20,17 @@ export interface ClientDB {
   id: number;
   name: string;
   phone: string;
-  mesures_actuelles: string;
+  mesures_actuelles: Record<string, string> | string;
   created_at: string;
 }
 
 export interface CommandeDB {
   id: number;
   clientName: string;
+  clientPhone: string;
+  profile: string;
   garment_type_id: string;
+  catalogue_modele_id: number | null;
   photo_commande: string | null;
   mesures_commande: string;
   notes: string | null;
@@ -55,78 +58,70 @@ export const compterCommandes7DerniersJours = async (): Promise<number> => {
 };
 
 /**
- * 2. Enregistrer un nouveau client et sa commande - ASYNC & SÉCURISÉ
+ * 2. Enregistrer un nouveau client et sa commande - ASYNC & SÉCURISÉ (Transaction SQL)
  */
 export const enregistrerNouveauClientAvecCommande = async (
   name: string,
   phone: string,
+  profile: string,
   garmentTypeId: string,
   mesures: Record<string, string>,
   notes: string,
   photoCommande: string | null = null,
   catalogueId: number | null = null
 ): Promise<{ clientId: number; dateLivraison: string }> => {
-  try {
-    const mesuresJSON = JSON.stringify(mesures);
-    const phoneStr = String(phone).trim();
-    let clientId: number;
+  const mesuresJSON = JSON.stringify(mesures);
+  const phoneStr = String(phone).trim();
 
-    // A. Tenter d'insérer le client. S'il existe déjà, SQLite l'ignore silencieusement.
+  try {
+    // 1. Début de la transaction atomique
+    await db.execute('BEGIN TRANSACTION;');
+
+    // A. Insertion / Ignore Client
     await db.execute(
       'INSERT OR IGNORE INTO clients (name, phone, mesures_actuelles) VALUES (?, ?, ?);',
       [name, phoneStr, mesuresJSON]
     );
 
-    // B. Récupérer l'ID du client de manière garantie (qu'il vienne d'être créé ou existait déjà)
+    // B. Récupération ID Client
     const selectClient = await db.execute(
       'SELECT id FROM clients WHERE CAST(phone AS TEXT) = CAST(? AS TEXT) LIMIT 1;',
       [phoneStr]
     );
     const clientRows = getRows(selectClient);
-
     if (clientRows.length === 0) {
-      throw new Error("Impossible d'obtenir l'ID du client après insertion.");
+      throw new Error("Impossible d'obtenir l'ID du client.");
     }
+    const clientId = clientRows[0].id;
 
-    const clientIdFromDb = clientRows[0].id;
-    clientId = clientIdFromDb;
-
-    // C. Mettre à jour systématiquement les infos du client (garde le nom et les mesures à jour)
+    // C. Mise à jour infos client
     await db.execute(
       'UPDATE clients SET name = ?, mesures_actuelles = ? WHERE id = ?;',
       [name, mesuresJSON, clientId]
     );
 
-    // D. Appliquer l'algorithme d'estimation de date de livraison
+    // D. Calcul Date de Livraison
     const commandesRecentes = await compterCommandes7DerniersJours();
     const dateEstimee = estimerDateLivraison(garmentTypeId, commandesRecentes);
     const dateLivraisonFormatee = formaterDateLivraison(dateEstimee);
 
-    // E. Enregistrer la commande associée (clientId est garanti d'être non nul et valide)
+    // E. Insertion Commande
     await db.execute(
       `INSERT INTO commandes (
-        client_id,
-        garment_type_id,
-        catalogue_modele_id,
-        photo_commande,
-        mesures_commande,
-        notes,
-        date_livraison_estimee
-      ) VALUES (?, ?, ?, ?, ?, ?, ?);`,
-      [
-        clientId,
-        garmentTypeId,
-        catalogueId,
-        photoCommande,
-        mesuresJSON,
-        notes,
-        dateLivraisonFormatee,
-      ]
+        client_id, profile, garment_type_id, catalogue_modele_id,
+        photo_commande, mesures_commande, notes, date_livraison_estimee
+      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?);`,
+      [clientId, profile, garmentTypeId, catalogueId, photoCommande, mesuresJSON, notes, dateLivraisonFormatee]
     );
+
+    // 2. Validation de la transaction
+    await db.execute('COMMIT;');
 
     return { clientId, dateLivraison: dateLivraisonFormatee };
   } catch (error) {
-    console.error('Erreur lors de l’enregistrement de la commande :', error);
+    // 3. Rollback automatique en cas d'erreur
+    await db.execute('ROLLBACK;').catch(() => {});
+    console.error('Échec de la transaction SQL (Rollback exécuté) :', error);
     throw error;
   }
 };
@@ -165,12 +160,28 @@ export const recupererUrgencesSemaine = async (): Promise<CommandeDB[]> => {
 };
 
 /**
- * 4. Récupérer l'ensemble des clients - ASYNC
+ * 4. Récupérer l'ensemble des clients - ASYNC (Mesures pré-parsées)
  */
 export const recupererTousLesClients = async (): Promise<ClientDB[]> => {
   try {
     const result = await db.execute('SELECT * FROM clients ORDER BY name ASC;');
-    return getRows(result);
+    const rows = getRows(result);
+    return rows.map((client) => {
+      let parsedMesures = {};
+      if (typeof client.mesures_actuelles === 'string') {
+        try {
+          parsedMesures = JSON.parse(client.mesures_actuelles);
+        } catch {
+          parsedMesures = {};
+        }
+      } else if (client.mesures_actuelles && typeof client.mesures_actuelles === 'object') {
+        parsedMesures = client.mesures_actuelles;
+      }
+      return {
+        ...client,
+        mesures_actuelles: parsedMesures,
+      };
+    });
   } catch (error) {
     console.error('Erreur lors de la récupération des clients :', error);
     return [];
@@ -187,6 +198,7 @@ export const recupererCommandesNonSynchro = async (): Promise<any[]> => {
         com.id,
         cli.name as clientName,
         cli.phone as clientPhone,
+        com.profile,
         com.garment_type_id,
         com.mesures_commande,
         com.notes,
@@ -219,5 +231,52 @@ export const marquerCommandesCommeSynchro = async (ids: number[]): Promise<void>
     console.log(`=== ${ids.length} COMMANDES MARQUÉES COMME SYNCHRONISÉES ===`);
   } catch (error) {
     console.error('Erreur lors de la mise à jour du statut de synchro :', error);
+  }
+};
+
+/**
+ * 7. Récupérer toutes les commandes avec infos client
+ */
+export const recupererToutesLesCommandes = async (): Promise<CommandeDB[]> => {
+  try {
+    const query = `
+      SELECT 
+        com.id,
+        cli.name AS clientName,
+        cli.phone AS clientPhone,
+        com.profile,
+        com.garment_type_id,
+        com.catalogue_modele_id,
+        com.photo_commande,
+        com.mesures_commande,
+        com.notes,
+        com.status,
+        com.date_reception,
+        com.date_livraison_estimee
+      FROM commandes com
+      JOIN clients cli ON com.client_id = cli.id
+      ORDER BY com.date_reception DESC;
+    `;
+    const result = await db.execute(query);
+    return getRows(result);
+  } catch (error) {
+    console.error('Erreur lors de la récupération de toutes les commandes :', error);
+    return [];
+  }
+};
+
+/**
+ * 8. Mettre à jour le statut d'une commande (et reset is_synced pour forcer la synchro)
+ */
+export const mettreAJourStatutCommande = async (commandeId: number, nouveauStatut: string): Promise<void> => {
+  try {
+    await db.execute(
+      'UPDATE commandes SET status = ?, is_synced = 0 WHERE id = ?;',
+      [nouveauStatut, commandeId]
+    );
+    console.log(`=== COMMANDE ${commandeId} : STATUT MIS À JOUR VERS "${nouveauStatut}" (is_synced=0) ===`);
+  } catch (error) {
+    console.error('Erreur lors de la mise à jour du statut de la commande :', error);
+    throw error;
   }
 };

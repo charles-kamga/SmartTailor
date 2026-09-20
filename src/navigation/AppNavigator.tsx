@@ -1,4 +1,5 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
+import { View, Text, ActivityIndicator, StyleSheet } from 'react-native';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 
@@ -11,17 +12,32 @@ import LoginScreen from '../screens/LoginScreen';
 import DashboardScreen from '../screens/DashboardScreen';
 import ClientsScreen from '../screens/ClientsScreen';
 import CommandesScreen from '../screens/CommandesScreen';
-import NouveauClientScreen from '../screens/NouveauClientScreen';
-import PriseMesuresScreen from '../screens/PriseMesuresScreen';
+import NouvelleCommandeScreen from '../screens/NouvelleCommandeScreen';
+import { checkIsLoggedIn } from '../services/authService';
 
-import { View, Text } from 'react-native';
 function CataloguePlaceholder() {
   return (
-    <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
-      <Text>Catalogue des Modèles</Text>
+    <View style={styles.placeholderContainer}>
+      <Text style={styles.placeholderText}>Catalogue des Modèles</Text>
     </View>
   );
 }
+
+const renderAtelierIcon = ({ color, size }: { color: string; size: number }) => (
+  <Icon name="home-outline" size={size} color={color} />
+);
+
+const renderClientsIcon = ({ color, size }: { color: string; size: number }) => (
+  <Icon name="people-outline" size={size} color={color} />
+);
+
+const renderCatalogueIcon = ({ color, size }: { color: string; size: number }) => (
+  <Icon name="book-outline" size={size} color={color} />
+);
+
+const renderCommandesIcon = ({ color, size }: { color: string; size: number }) => (
+  <Icon name="briefcase-outline" size={size} color={color} />
+);
 
 const Stack = createNativeStackNavigator<RootStackParamList>();
 const Tab = createBottomTabNavigator<BottomTabParamList>();
@@ -29,45 +45,93 @@ const Tab = createBottomTabNavigator<BottomTabParamList>();
 function BottomTabNavigator() {
   return (
     <Tab.Navigator
-      screenOptions={({ route }) => ({
+      screenOptions={{
         headerShown: false,
-        tabBarActiveTintColor: '#E2583E', // Orange/terracotta
+        tabBarActiveTintColor: '#E2583E', // Terracotta atelier
         tabBarInactiveTintColor: '#64748B',
-        tabBarStyle: { backgroundColor: '#FFFFFF', paddingBottom: 5, height: 60 },
-        // Configuration dynamique des icônes pour chaque onglet
-        tabBarIcon: ({ color, size }) => {
-          let iconName = 'alert-circle-outline';
-
-          if (route.name === 'Atelier') {
-            iconName = 'home-outline';
-          } else if (route.name === 'Clients') {
-            iconName = 'people-outline';
-          } else if (route.name === 'Catalogue') {
-            iconName = 'book-outline';
-          } else if (route.name === 'Commandes') {
-            iconName = 'briefcase-outline';
-          }
-
-          // Retourne le composant icône configuré
-          return <Icon name={iconName} size={size} color={color} />;
-        },
-      })}
+        tabBarStyle: styles.tabBar,
+      }}
     >
-      <Tab.Screen name="Atelier" component={DashboardScreen} />
-      <Tab.Screen name="Clients" component={ClientsScreen} />
-      <Tab.Screen name="Catalogue" component={CataloguePlaceholder} />
-      <Tab.Screen name="Commandes" component={CommandesScreen} />
+      <Tab.Screen
+        name="Atelier"
+        component={DashboardScreen}
+        options={{ tabBarIcon: renderAtelierIcon }}
+      />
+      <Tab.Screen
+        name="Clients"
+        component={ClientsScreen}
+        options={{ tabBarIcon: renderClientsIcon }}
+      />
+      <Tab.Screen
+        name="Catalogue"
+        component={CataloguePlaceholder}
+        options={{ tabBarIcon: renderCatalogueIcon }}
+      />
+      <Tab.Screen
+        name="Commandes"
+        component={CommandesScreen}
+        options={{ tabBarIcon: renderCommandesIcon }}
+      />
     </Tab.Navigator>
   );
 }
 
 export default function AppNavigator() {
+  const [loading, setLoading] = useState(true);
+  const [isLoggedIn, setIsLoggedIn] = useState(false);
+
+  useEffect(() => {
+    const verifyAuth = async () => {
+      const loggedIn = await checkIsLoggedIn();
+      setIsLoggedIn(loggedIn);
+      setLoading(false);
+    };
+    verifyAuth();
+  }, []);
+
+  if (loading) {
+    return (
+      <View style={styles.loadingContainer}>
+        <ActivityIndicator size="large" color="#E2583E" />
+      </View>
+    );
+  }
+
   return (
-    <Stack.Navigator screenOptions={{ headerShown: false }}>
+    <Stack.Navigator
+      initialRouteName={isLoggedIn ? 'MainApp' : 'Login'}
+      screenOptions={{ headerShown: false }}
+    >
       <Stack.Screen name="Login" component={LoginScreen} />
       <Stack.Screen name="MainApp" component={BottomTabNavigator} />
-      <Stack.Screen name="NouveauClient" component={NouveauClientScreen} />
-      <Stack.Screen name="PriseMesures" component={PriseMesuresScreen} />
+      <Stack.Screen name="NouvelleCommande" component={NouvelleCommandeScreen} />
     </Stack.Navigator>
   );
 }
+
+const styles = StyleSheet.create({
+  loadingContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: '#FAF8F5',
+  },
+  placeholderContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: '#FAF8F5',
+  },
+  placeholderText: {
+    fontSize: 16,
+    color: '#64748B',
+    fontWeight: '500',
+  },
+  tabBar: {
+    backgroundColor: '#FFFFFF',
+    paddingBottom: 5,
+    height: 60,
+    borderTopWidth: 1,
+    borderTopColor: '#F1F5F9',
+  },
+});

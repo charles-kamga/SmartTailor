@@ -83,12 +83,16 @@ export default function ClientsScreen({ navigation }: any) {
   const renderItem = ({ item }: { item: ClientDB }) => {
     const isExpanded = expandedClientId === item.id;
     
-    // Parser les mesures stockées en chaîne JSON
+    // Parser les mesures stockées en chaîne JSON si nécessaire
     let mesuresObj: Record<string, string> = {};
-    try {
-      mesuresObj = JSON.parse(item.mesures_actuelles || '{}');
-    } catch (e) {
-      console.error('Erreur de parsing des mesures :', e);
+    if (typeof item.mesures_actuelles === 'object' && item.mesures_actuelles !== null) {
+      mesuresObj = item.mesures_actuelles as Record<string, string>;
+    } else if (typeof item.mesures_actuelles === 'string') {
+      try {
+        mesuresObj = JSON.parse(item.mesures_actuelles || '{}');
+      } catch (e) {
+        console.error('Erreur de parsing des mesures :', e);
+      }
     }
 
     const mesuresEntries = Object.entries(mesuresObj);
@@ -203,7 +207,7 @@ export default function ClientsScreen({ navigation }: any) {
       {/* 3. Bouton flottant d'ajout client (Design "Squircle" terracotta assorti) */}
       <TouchableOpacity
         style={styles.fab}
-        onPress={() => navigation.navigate('NouveauClient')}
+        onPress={() => navigation.navigate('NouvelleCommande')}
         activeOpacity={0.8}
       >
         <Icon name="person-add-outline" size={24} color="#FFFFFF" />
@@ -387,7 +391,7 @@ const styles = StyleSheet.create({
     width: 56,
     height: 56,
     borderRadius: 16, // Forme "Squircle" moderne assortie
-    backgroundColor: '#A04000', // Terracotta sombre
+    backgroundColor: '#E2583E', // Terracotta atelier
     justifyContent: 'center',
     alignItems: 'center',
     elevation: 4,

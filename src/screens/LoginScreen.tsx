@@ -10,6 +10,7 @@ import {
 import { SafeAreaView } from 'react-native-safe-area-context';
 import Icon from 'react-native-vector-icons/Ionicons';
 import { GoogleSignin, statusCodes } from '@react-native-google-signin/google-signin';
+import { saveUserSession } from '../services/authService';
 
 export default function LoginScreen({ navigation }: any) {
   
@@ -20,15 +21,15 @@ export default function LoginScreen({ navigation }: any) {
       
       // 2. Lance la boîte de dialogue de connexion Google
       const response = await GoogleSignin.signIn();
+      await saveUserSession(response);
       
       console.log('=== CONNEXION RÉUSSIE ===');
       // On affiche les données reçues dans les logs Metro pour vérification
       console.log('Détails de l’utilisateur :', JSON.stringify(response, null, 2));
       
       // 3. Récupère les jetons d'accès (Tokens) requis pour Google Drive/Sheets
-      const tokens = await GoogleSignin.getTokens();
+      await GoogleSignin.getTokens();
       console.log('Access Token récupéré avec succès !');
-      // console.log('Token d’accès :', tokens.accessToken); // Utile pour les futurs appels API
 
       // 4. Redirige vers l'application principale
       navigation.navigate('MainApp');
@@ -69,7 +70,7 @@ export default function LoginScreen({ navigation }: any) {
         <Text style={styles.subtitle}>Faciliter la gestion de vos commandes</Text>
       </View>
 
-      <View style={{ flex: 1, justifyContent: 'flex-start', marginTop: -70 }}>
+      <View style={styles.bodySection}>
         {/* 2. Illustration centrale */}
         <View style={styles.illustrationSection}>
           <Image
@@ -131,9 +132,14 @@ const styles = StyleSheet.create({
     marginBottom: 8,
   },
   subtitle: {
-    fontSize: 15,
+    fontSize: 14,
     color: '#64748B',
-    textAlign: 'center',
+    marginTop: 4,
+  },
+  bodySection: {
+    flex: 1,
+    justifyContent: 'flex-start',
+    marginTop: -70,
   },
   illustrationSection: {
     alignItems: 'center',
